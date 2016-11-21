@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# Logger helper
+# Example: logMessage [ -l [error, warn, info, debug]], [ -t [tag]], [message]
+level=info
+tag=$(ps -o comm= $PPID)
+function usage() {
+  echo -e "Logs a message to the system log\n"
+  echo -e "Usage: logMessage [-l [error, warn, info, debug] [-t [tag]] [--help]] [message]"
+  echo -e "\t--help\tDisplays this message."
+  echo -e "\t-l | --level\tSets the log level for the message\n\t\tPossible values are [error, warn, info(default), debug]"
+  echo -e "\t-t | --tag\tSets the tag for the log message (name of process that is logging the message - defaults to caller)"
+}
+
+function main() {
+  message="$@"
+  for var in level tag message ; do
+      if [ ! -n "${!var:-}" ]; then
+          echo "\"$var\" is not set but is required"
+          usage
+          exit 1
+      fi
+  done
+
+  logSeed="logger -i -s -t $tag"
+
+  if [ "$level" = "error" ]; then
+      logCommand="$logSeed -plocal3.err -t $tag -- !!!!ERROR!!!! -> "
+  elif [ "$level" = "warn" ]; then
+      logCommand="$logSeed -plocal3.warning -t $tag -- %%%%WARN%%%% -> "
+  elif [ "$level" = "info" ]; then
+      logCommand="$logSeed -plocal3.info -t $tag -- ####INFO#### -> "
+  elif [ "$level" = "debug" ]; then
+      logCommand="$logSeed -plocal3.debug -t $tag -- ****DEBUG**** -> "
+  else
+      echo "level: \"$level\" is not a valid log level"
+      exit 1
+  fi
+
+  $logCommand "$message"
+
+  exit 0
+}
+
+while [ "$1" != "" ]; do
+  case $1 in
+    -l | --level )
+      shift
+      level=$1
+    ;;
+    -t | --tag)
+      shift
+      tag=$1
+    ;;
+    -h | --help )
+      usage
+      exit
+    ;;
+    * )
+      main $@
+  esac
+  shift
+done

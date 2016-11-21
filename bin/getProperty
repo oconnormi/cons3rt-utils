@@ -1,0 +1,59 @@
+#!/bin/bash
+# Finds the specified deployment property
+
+# Usage: getProperty [property] [role (defaults to own role)] role accepts a -g flag for global
+# exits 1 when value is empty
+
+logTag=cons3rt-utils
+
+deployProps=$(getDeployProps)
+
+function main() {
+  property="$@"
+  if [ ! -n "$property" ]; then
+    logMessage -l error -t $logTag "'property' is not set but is required"
+    logMessage -t $logTag "Usage: getProperty [property] [role (defaults to own role)]"
+    exit 1
+  fi
+
+  grepSeed="$property.$role"
+
+  if [ "$global" = true ]; then
+    grepSeed="$property"
+  fi
+
+  if [ ! -n "$role" ]; then
+    role=$(getRole)
+    grepSeed="$property.$role"
+  fi
+
+  value=$(cat $deployProps | grep -i $grepSeed | awk -F = '{ print $2 }')
+
+  if [ ! -n "$value" ]; then
+    logMessage -l warn -t $logTag "property \'${property}\' with role \'${role}\' not found"
+    exit 1
+  fi
+
+  echo "$value"
+
+  exit 0
+}
+
+while [ "$1" != "" ]; do
+  case $1 in
+    -r | --role )
+      shift
+      role=$1
+    ;;
+    -g | --global)
+      global=true
+    ;;
+    -h | --help )
+      usage
+      exit
+    ;;
+    * )
+      main $@
+  esac
+  shift
+done

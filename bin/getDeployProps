@@ -1,0 +1,37 @@
+#!/bin/bash
+# Find the cons3rt deployment properties file
+
+logTag=cons3rt-utils
+
+function usage() {
+  echo -e "Returns the path to the cons3rt deployment.properties file\n"
+  echo -e "Usage: getDeployProps [--help]"
+  echo -e "\t--help\tDisplays this message."
+}
+
+function main() {
+  deployProps=$(find /opt/cons3rt-agent/run/Deployment* -name deployment.properties)
+
+  if [ ! -n "${deployProps}" ]; then
+      logMessage -l error -t $logTag "Could not locate deployment.properties"
+      exit 1
+  fi
+
+  echo "$deployProps"
+  exit 0
+}
+
+while [ "$1" != "" ]; do
+  case $1 in
+    --help )
+      usage
+      exit
+    ;;
+    * )
+      usage
+      exit 1
+  esac
+  shift
+done
+
+main

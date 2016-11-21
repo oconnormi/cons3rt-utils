@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# Finds and returns the system role
+
+logTag=cons3rt-utils
+
+function usage() {
+  echo -e "Returns the role assigned to the current system within the cons3rt deployment"
+  echo -e "Usage: getRole [--help]"
+  echo -e "\t--help\tDisplays this message."
+}
+
+function main() {
+  deployProps=$(getDeployProps)
+
+  if [ $? -ne 0 ]; then
+      logMessage -l error -t $logTag "Could not locate role, properties file missing"
+      exit 1
+  fi
+
+  role=$(cat ${deployProps} | grep "hostname.*=$(hostname)" | awk -F '.' '{print $6}' | cut -d '=' -f 1)
+
+  if [ $? -ne 0 ]; then
+      logMessage -l error -t $logTag "Unable to locate role for this system in properties file"
+      exit 1
+  fi
+
+  echo "$role"
+
+  exit 0
+}
+
+while [ "$1" != "" ]; do
+  case $1 in
+    --help )
+      usage
+      exit
+    ;;
+    * )
+      usage
+      exit 1
+  esac
+  shift
+done
+
+main
