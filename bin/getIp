@@ -1,0 +1,32 @@
+#!/bin/bash
+# Finds the specified role's ip address
+
+# Usage: getIp [role]
+# exits 1 when value is empty
+
+logTag=cons3rt-utils
+
+deployProps=$(getDeployProps)
+
+function main() {
+  role="$@"
+  if [ ! -n "$role" ]; then
+    logMessage -l debug "No role specified, defaulting to local role"
+    role=$(getRole)
+  fi
+
+  grepString="cons3rt.fap.deployment.machine.$role.0.internalIp"
+
+  value=$(cat $deployProps | grep -i $grepString | awk -F = '{ print $2 }')
+
+  if [ ! -n "$value" ]; then
+    logMessage -l warn -t $logTag "IP Address for role \'${role}\' not found"
+    exit 1
+  fi
+
+  echo "$value"
+
+  exit 0
+}
+
+main $@
